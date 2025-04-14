@@ -1,0 +1,1 @@
+INSERT INTO users(id, balance) VALUES (1, 0), (2,10000), (3,-10);

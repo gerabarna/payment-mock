@@ -3,10 +3,14 @@ package hu.gerab.payment.service;
 import java.math.BigDecimal;
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+/**
+ * Simplistic messaging service to forward messages to kafka
+ */
 @Service
 public class MessagingService {
 
@@ -15,6 +19,7 @@ public class MessagingService {
   @Value("${kafka.transaction.topic}")
   private String topic;
 
+  @Autowired
   public MessagingService(KafkaTemplate<Long, Object> kafkaTemplate) {
     this.kafkaTemplate = kafkaTemplate;
   }

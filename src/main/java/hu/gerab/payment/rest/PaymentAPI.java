@@ -18,6 +18,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 // @SecurityRequirement() TBD
 public interface PaymentAPI {
 
+  /**
+   * For simple invocation please send a POST request to:
+   * localhost:8080/payment/transaction?userId=2&amount=4&currency=USD
+   */
   @Operation(
       summary = "Handles a simple transaction for the user",
       responses = {
@@ -26,7 +30,10 @@ public interface PaymentAPI {
   @PostMapping("transaction")
   String handleTransaction(
       @Parameter(description = "The id of the user", in = QUERY) @QueryParam("userId") Long userId,
-      @Parameter(description = "The amount with which to change the user balance", in = QUERY)
+      @Parameter(
+              description =
+                  "The amount with which to change the user balance. Only non-zero amounts are valid",
+              in = QUERY)
           @QueryParam("amount")
           BigDecimal amount,
       @Parameter(
