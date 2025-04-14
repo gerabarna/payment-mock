@@ -28,8 +28,17 @@ You did not ask to account for any currency related things I assume a single cur
 this small mock, but since we are talking about 'payments' completely omitting currencies felt wrong. 
 
 ## Tools
+### code style
 I have used the google style plugin for formatting.
 
+### vault
 I have used vault to store secrets. This was not specified, but some secret store would be necessary 
 to securely store sensitive information, as sensitive information cannot really be removed from a 
 repository without mangling histories, so it is good to have that from the start
+
+### dockerisation
+I have containerised the application with the maven jib plugin. To create the docker image please execute:
+```mvn compile com.google.cloud.tools:jib-maven-plugin:3.4.5:build```
+
+this uploads the image into docker hub (registry.hub.docker.com) with the current settings, and assumes the credentials 
+to be present in the maven settings.xml for the repository connection
