@@ -99,4 +99,37 @@ class PaymentServiceHelperIntegrationTest {
     verify(messagingService).sendTransactionNotification(notificationCaptor.capture());
     assertFalse(notificationCaptor.getValue().isSuccessful());
   }
+
+  @Test
+  public void givenUserWithNegativeBalance_whenPositiveTransactionComes_SucceedsWitMessage() {
+    Long userId =
+        userRepository
+            .save(User.builder().balance(new BigDecimal("-100")).currency("USD").build())
+            .getId();
+    assertEquals(0, transactionRepository.count());
+    verifyNoInteractions(messagingService);
+    var notificationCaptor = ArgumentCaptor.forClass(TransactionNotification.class);
+
+    paymentServiceHelper.processTransaction("1", userId, new BigDecimal("10"), "USD");
+
+    assertEquals(0, new BigDecimal("-90").compareTo(userRepository.findById(userId).get().getBalance()));
+    assertEquals(1, transactionRepository.count());
+    verify(messagingService).sendTransactionNotification(notificationCaptor.capture());
+    assertTrue(notificationCaptor.getValue().isSuccessful());
+  }
+
+  @Test
+  public void whenTransactionComesWithZeroAmount_FailsWithMessage() {
+    Long userId = userRepository.save(User.builder().balance(TEN).currency("USD").build()).getId();
+    assertEquals(0, transactionRepository.count());
+    verifyNoInteractions(messagingService);
+    var notificationCaptor = ArgumentCaptor.forClass(TransactionNotification.class);
+
+    paymentServiceHelper.processTransaction("1", userId, ZERO, "USD");
+
+    assertEquals(0, TEN.compareTo(userRepository.findById(userId).get().getBalance()));
+    assertEquals(0, transactionRepository.count());
+    verify(messagingService).sendTransactionNotification(notificationCaptor.capture());
+    assertFalse(notificationCaptor.getValue().isSuccessful());
+  }
 }
