@@ -10,8 +10,6 @@ import hu.gerab.payment.domain.User;
 import hu.gerab.payment.repository.TransactionRepository;
 import hu.gerab.payment.repository.UserRepository;
 import java.math.BigDecimal;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,15 +20,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @ContextConfiguration(classes = TestDatabaseConfig.class)
-@Transactional
 class PaymentServiceHelperIntegrationTest {
-
-  public static final long USER1 = 1L;
   private PaymentServiceHelper paymentServiceHelper;
   @Autowired private UserRepository userRepository;
   @Autowired private TransactionRepository transactionRepository;
@@ -57,7 +51,7 @@ class PaymentServiceHelperIntegrationTest {
     assertEquals(0, transactionRepository.count());
     verifyNoInteractions(messagingService);
 
-    paymentServiceHelper.processTransaction("1", USER1, new BigDecimal("-10"), "USD");
+    paymentServiceHelper.processTransaction("1", 1L, new BigDecimal("-10"), "USD");
 
     assertEquals(0, transactionRepository.count());
     verifyNoInteractions(messagingService);
@@ -65,21 +59,25 @@ class PaymentServiceHelperIntegrationTest {
 
   @Test
   public void givenUserWithBalance_whenSmallerAmountTransactionComes_processedAsExpected() {
-    userRepository.save(User.builder().balance(new BigDecimal("1000")).currency("USD").build());
-    assertNotNull(userRepository.getReferenceById(USER1));
+    Long userId =
+        userRepository
+            .save(User.builder().balance(new BigDecimal("1000")).currency("USD").build())
+            .getId();
+    userRepository.findAll().forEach(System.out::println);
+    assertTrue(userRepository.findById(userId).isPresent());
     assertEquals(0, transactionRepository.count());
     verifyNoInteractions(messagingService);
     var notificationCaptor = ArgumentCaptor.forClass(TransactionNotification.class);
 
-    paymentServiceHelper.processTransaction("1", USER1, new BigDecimal("-10"), "USD");
+    paymentServiceHelper.processTransaction("1", userId, new BigDecimal("-10"), "USD");
 
-    BigDecimal balance = userRepository.getReferenceById(USER1).getBalance();
+    BigDecimal balance = userRepository.findById(userId).get().getBalance();
     assertEquals(0, new BigDecimal("990").compareTo(balance));
     assertEquals(1, transactionRepository.count());
     assertEquals(
         0,
         transactionRepository
-            .findByUserId(USER1)
+            .findByUserId(userId)
             .get(0)
             .getAmount()
             .compareTo(new BigDecimal("-10")));
@@ -89,17 +87,16 @@ class PaymentServiceHelperIntegrationTest {
 
   @Test
   public void givenUserWithNoBalance_whenNegativeTransactionComes_Fails() {
-    userRepository.save(User.builder().balance(ZERO).currency("USD").build());
+    Long userId = userRepository.save(User.builder().balance(ZERO).currency("USD").build()).getId();
     assertEquals(0, transactionRepository.count());
     verifyNoInteractions(messagingService);
     var notificationCaptor = ArgumentCaptor.forClass(TransactionNotification.class);
 
-    paymentServiceHelper.processTransaction("1", USER1, new BigDecimal("-10"), "USD");
+    paymentServiceHelper.processTransaction("1", userId, new BigDecimal("-10"), "USD");
 
-    assertEquals(0, ZERO.compareTo(userRepository.getReferenceById(USER1).getBalance()));
+    assertEquals(0, ZERO.compareTo(userRepository.findById(userId).get().getBalance()));
     assertEquals(0, transactionRepository.count());
     verify(messagingService).sendTransactionNotification(notificationCaptor.capture());
     assertFalse(notificationCaptor.getValue().isSuccessful());
   }
-
 }

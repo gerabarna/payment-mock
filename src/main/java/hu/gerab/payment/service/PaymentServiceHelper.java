@@ -9,6 +9,7 @@ import hu.gerab.payment.repository.TransactionRepository;
 import hu.gerab.payment.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -38,11 +39,17 @@ public class PaymentServiceHelper {
   public Boolean processTransaction(
       String requestId, long userId, BigDecimal amount, String currency) {
     if (Comparables.compareEquals(amount, ZERO)) {
-      throw new IllegalArgumentException("Transactions should have a non-zero amount.");
+      LOGGER.error("Illegal amount={} for requestId={}", amount, requestId);
+      return false;
     }
     try {
+      Optional<User> userOp = userRepository.findById(userId);
       // validate balance
-      User user = userRepository.getReferenceById(userId);
+      if (userOp.isEmpty()) {
+        LOGGER.error("No user exists for id={} for requestId={}", userId, requestId);
+        return false;
+      }
+      User user = userOp.get();
       final BigDecimal newBalance = user.getBalance().add(amount);
       if (ZERO.compareTo(newBalance) > 0) {
         MessagingService.TransactionNotification notification =
