@@ -1,5 +1,6 @@
 package hu.gerab.payment.service;
 
+import static hu.gerab.payment.domain.Currency.*;
 import static java.math.BigDecimal.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,7 +25,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -38,8 +38,6 @@ class PaymentServiceImplTest {
   @Autowired private UserRepository userRepository;
   @Autowired private TransactionRepository transactionRepository;
 
-  @Autowired private JdbcTemplate jdbcTemplate;
-
   @BeforeEach
   void setup() {
     paymentService = new PaymentServiceImpl(paymentServiceHelper, 10);
@@ -47,8 +45,8 @@ class PaymentServiceImplTest {
 
   @AfterEach
   void cleanup() {
-    jdbcTemplate.execute("TRUNCATE TABLE users");
-    jdbcTemplate.execute("TRUNCATE TABLE transactions");
+    userRepository.deleteAll();
+    transactionRepository.deleteAll();
   }
 
   @Test
@@ -57,12 +55,9 @@ class PaymentServiceImplTest {
           throws InterruptedException {
     assertEquals(0, userRepository.count());
     assertEquals(0, transactionRepository.count());
-    Long userId1 =
-        userRepository.save(User.builder().balance(ZERO).currency("USD").build()).getId();
-    Long userId2 =
-        userRepository.save(User.builder().balance(ZERO).currency("USD").build()).getId();
-    Long userId3 =
-        userRepository.save(User.builder().balance(ZERO).currency("USD").build()).getId();
+    Long userId1 = userRepository.save(User.builder().balance(ZERO).currency(USD).build()).getId();
+    Long userId2 = userRepository.save(User.builder().balance(ZERO).currency(USD).build()).getId();
+    Long userId3 = userRepository.save(User.builder().balance(ZERO).currency(USD).build()).getId();
     // Three users placing transaction requests in quick succession
     CountDownLatch latch = new CountDownLatch(3);
     Instant start = Instant.now();
@@ -74,13 +69,17 @@ class PaymentServiceImplTest {
                   public void run() {
                     List<Future<Boolean>> futures = new ArrayList<>();
                     for (int i = 0; i < 10; i++) {
-                      Future<Boolean> future = paymentService.processTransaction(
-                              String.format("%d-%d", userId, i+1), userId, new BigDecimal(i+1), "USD");
+                      Future<Boolean> future =
+                          paymentService.processTransaction(
+                              String.format("%d-%d", userId, i + 1),
+                              userId,
+                              new BigDecimal(i + 1),
+                              USD);
                       futures.add(future);
                     }
                     for (Future<Boolean> future : futures) {
                       try {
-                        future.get(10,TimeUnit.SECONDS);
+                        future.get(10, TimeUnit.SECONDS);
                       } catch (InterruptedException | ExecutionException | TimeoutException e) {
                         Assertions.fail(e);
                       }
@@ -101,11 +100,13 @@ class PaymentServiceImplTest {
       for (int i = 0; i < 10; i++) {
         final Transaction transaction = user1Transactions.get(i);
         assertEquals(userId, transaction.getUserId());
-        assertEquals(0, transaction.getAmount().compareTo(new BigDecimal(i+1)),
-                String.format("Expected Amount=%d but actual=%s", i+1, transaction.getAmount()));
-        assertEquals("USD", transaction.getCurrency());
-        assertEquals(String.format("%d-%d", userId, i+1), transaction.getRequestId());
-        //assertEquals(-1, lastInserted.compareTo(transaction.getInserted()));
+        assertEquals(
+            0,
+            transaction.getAmount().compareTo(new BigDecimal(i + 1)),
+            String.format("Expected Amount=%d but actual=%s", i + 1, transaction.getAmount()));
+        assertEquals(USD, transaction.getCurrency());
+        assertEquals(String.format("%d-%d", userId, i + 1), transaction.getRequestId());
+        // assertEquals(-1, lastInserted.compareTo(transaction.getInserted()));
         lastInserted = transaction.getInserted();
       }
     }

@@ -3,6 +3,7 @@ package hu.gerab.payment.service;
 import static java.math.BigDecimal.ZERO;
 
 import hu.gerab.payment.Comparables;
+import hu.gerab.payment.domain.Currency;
 import hu.gerab.payment.domain.Transaction;
 import hu.gerab.payment.domain.User;
 import hu.gerab.payment.repository.TransactionRepository;
@@ -40,13 +41,13 @@ public class PaymentServiceHelper {
 
   @Transactional
   public Boolean processTransaction(
-      String requestId, long userId, BigDecimal amount, String currency) {
+      String requestId, long userId, BigDecimal amount, Currency currency) {
     TransactionNotificationBuilder notificationBuilder =
         TransactionNotification.builder()
             .userId(userId)
             .requestId(requestId)
             .amount(amount)
-            .currency(currency);
+            .currency(currency.getHumanFriendlyName());
     try {
       Optional<User> userOp = userRepository.findById(userId);
       // validate balance

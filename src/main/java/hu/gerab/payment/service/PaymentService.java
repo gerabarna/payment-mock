@@ -1,13 +1,11 @@
 package hu.gerab.payment.service;
 
-import lombok.Builder;
-import lombok.Data;
-
+import hu.gerab.payment.domain.Currency;
 import java.math.BigDecimal;
 import java.util.concurrent.Future;
 
 public interface PaymentService {
 
   Future<Boolean> processTransaction(
-      String requestId, long userId, BigDecimal amount, String currency);
+      String requestId, long userId, BigDecimal amount, Currency currency);
 }

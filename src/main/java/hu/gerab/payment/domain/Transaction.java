@@ -1,8 +1,9 @@
 package hu.gerab.payment.domain;
 
-import hu.gerab.payment.Comparables;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -10,10 +11,9 @@ import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Objects;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,6 +27,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Builder
+@EqualsAndHashCode(of = {"id", "userId", "requestId", "amount"})
 public class Transaction {
   @Id
   @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transaction_sequence")
@@ -45,27 +46,10 @@ public class Transaction {
   @Column(name = "amount", nullable = false)
   private BigDecimal amount;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "currency", nullable = false)
-  private String currency;
+  private Currency currency;
 
   @Column(name = "inserted", insertable = false, updatable = false)
   private Instant inserted;
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof Transaction that)) {
-      return false;
-    }
-    return Objects.equals(id, that.id)
-        && Objects.equals(userId, that.userId)
-        && Comparables.compareEquals(amount, that.amount);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, userId, amount);
-  }
 }

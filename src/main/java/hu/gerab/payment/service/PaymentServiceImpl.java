@@ -1,6 +1,7 @@
 package hu.gerab.payment.service;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import hu.gerab.payment.domain.Currency;
 import jakarta.annotation.PreDestroy;
 import java.math.BigDecimal;
 import java.util.concurrent.CompletableFuture;
@@ -16,12 +17,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * Implementation for the {@link PaymentService}. This is split in 2 main parts. This class mainly handles some
- * threading/task queuing things, and forwards the actual calls to {@link PaymentServiceHelper}.
- * This is needed as the @{@link org.springframework.transaction.annotation.Transactional} annotation is not
- * respected for calls within a class ( due to how proxies work )
+ * Implementation for the {@link PaymentService}. This is split in 2 main parts. This class mainly
+ * handles some threading/task queuing things, and forwards the actual calls to {@link
+ * PaymentServiceHelper}. This is needed as the @{@link
+ * org.springframework.transaction.annotation.Transactional} annotation is not respected for calls
+ * within a class ( due to how proxies work )
  *
- * For further explanation why a simple @Async was not used please see: {@link PaymentServiceImpl::getExecutorForUser}
+ * <p>For further explanation why a simple @Async was not used please see: {@link
+ * PaymentServiceImpl::getExecutorForUser}
  */
 @Slf4j
 @Service
@@ -77,9 +80,10 @@ public class PaymentServiceImpl implements PaymentService {
             });
     return executorService;
   }
+
   @Override
   public Future<Boolean> processTransaction(
-      String requestId, long userId, BigDecimal amount, String currency) {
+      String requestId, long userId, BigDecimal amount, Currency currency) {
     final ExecutorService executor = getExecutorForUser(userId);
     return CompletableFuture.supplyAsync(
         () -> paymentServiceHelper.processTransaction(requestId, userId, amount, currency),
