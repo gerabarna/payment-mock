@@ -1,7 +1,6 @@
 package hu.gerab.payment.config;
 
 import javax.sql.DataSource;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
@@ -16,12 +15,12 @@ public class DataSourceConfig {
   @Primary
   @Profile("!test") // This bean is active for all profiles except 'test', we use H2 there
   public DataSource dataSource(
-      @Value("${db.postgres.url}") String url,
+      @Value("${db.postgres.host}") String host,
       @Value("${db.postgres.username}") String user,
       @Value("${db.postgres.password}") String pass) {
     return DataSourceBuilder.create()
         .driverClassName("org.postgresql.Driver")
-        .url(url)
+        .url("jdbc:postgresql://" + host + "/kibit")
         .username(user)
         .password(pass)
         .build();
