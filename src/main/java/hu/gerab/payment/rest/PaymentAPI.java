@@ -20,16 +20,21 @@ public interface PaymentAPI {
 
   /**
    * For simple invocation please send a POST request to:
-   * localhost:8080/payment/transaction?userId=2&amount=4&currency=USD
+   * localhost:8080/payment/trasnfer?senderId=2&receiverId=4&amount=10&currency=USD
    */
   @Operation(
       summary = "Handles a simple transaction for the user",
       responses = {
         @ApiResponse(content = @Content(schema = @Schema(implementation = String.class)))
       })
-  @PostMapping("transaction")
-  String handleTransaction(
-      @Parameter(description = "The id of the user", in = QUERY) @QueryParam("userId") Long userId,
+  @PostMapping("transfer")
+  String handleTransfer(
+      @Parameter(description = "The id of the user sending the money", in = QUERY)
+          @QueryParam("senderId")
+          Long senderId,
+      @Parameter(description = "The id of the user receiving the money", in = QUERY)
+          @QueryParam("receiverId")
+          Long receiverId,
       @Parameter(
               description =
                   "The amount with which to change the user balance. Only non-zero amounts are valid",

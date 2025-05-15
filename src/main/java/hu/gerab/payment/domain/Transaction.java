@@ -37,8 +37,19 @@ public class Transaction {
       allocationSize = 1)
   private Long id;
 
-  @Column(name = "user_id", nullable = false)
-  private Long userId;
+  /**
+   * Some form of balance topup should exist in the system (even if the current implementation does
+   * not really support it). In that case this field should be null.
+   */
+  @Column(name = "sender_id")
+  private Long senderId;
+
+  /**
+   * Some form of cash withdrawal should exist in the system (even if the current implementation
+   * does not really support it). In that case this field should be null.
+   */
+  @Column(name = "receiver_id")
+  private Long receiverId;
 
   @Column(name = "request_id", nullable = false)
   private String requestId;
@@ -50,6 +61,6 @@ public class Transaction {
   @Column(name = "currency", nullable = false)
   private Currency currency;
 
-  @Column(name = "inserted", insertable = false, updatable = false)
+  @Column(name = "inserted")
   private Instant inserted;
 }

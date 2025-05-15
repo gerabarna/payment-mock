@@ -50,15 +50,24 @@ image needs to be created by the above command, but the pushed image can be used
 # Usage
 please edit the application properties or the environment variables in compose.yml to the appropriate values where 
 kafka and postgres are located in case you have a different setup.
-Once the application launches a new transaction can be submitted with:
-POST localhost:8080/payment/transaction?userId=2&amount=4&currency=USD
+Once the application launches a new transaction can be submitted with a POST request:
+```
+localhost:8080/payment/trasnfer?senderId=2&receiverId=4&amount=10&currency=USD
+```
 
 # Further improvements
 
-## Testing
-The current solution mostly used integration tests, as I wanted to make sure db functionality is tested, but only had
-a limited time for testing. Ideally more unit tests (so non-integration tests) should be used, as integration tests are
-slower to execute
+## Clustering
+Even though the solution was containerized, the current solution is only appropriate for a single instance deployment. 
+
+To make the solution appropriate for multiple instances the locking solution would need to be transformed. 
+The current setup could be directly updated to use distributed locks with minor adjustment
+(for example Hazelcast has those). 
+
+Another possibility would be to use the users table in the DB:
+the user records by id could be locked to ensure correct processing, however this would be slower, and would
+seriously interfere with user balance queries(assuming the system would have those).
+Furthermore the point of this mock to demonstrate some Java technology usage, not postgres usage.
 
 ## Security
 Currently there is no authorization on the transaction endpoint, obviously such an endpoint should be somehow authorized

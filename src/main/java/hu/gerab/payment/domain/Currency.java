@@ -2,7 +2,7 @@ package hu.gerab.payment.domain;
 
 import lombok.Getter;
 
-/** The accepted currencies of the system */
+/** The accepted currencies of the system. */
 public enum Currency {
   USD;
 

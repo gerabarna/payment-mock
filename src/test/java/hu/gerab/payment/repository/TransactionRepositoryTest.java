@@ -7,20 +7,22 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import hu.gerab.payment.config.TestDatabaseConfig;
 import hu.gerab.payment.domain.Transaction;
+import jakarta.persistence.EntityManager;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 
-@SpringBootTest
 @ActiveProfiles("test")
 @ContextConfiguration(classes = TestDatabaseConfig.class)
+@DataJpaTest
 class TransactionRepositoryTest {
 
   @Autowired private TransactionRepository transactionRepository;
+  @Autowired private EntityManager entityManager;
 
   @AfterEach
   void cleanup() {
@@ -29,17 +31,26 @@ class TransactionRepositoryTest {
 
   @Test
   public void whenNewTransactionPersistedAndRead_thenGivenFieldsEqualAndGeneratedFieldsAreFilled() {
+    assertEquals(0, transactionRepository.count());
     final Transaction transaction =
-        Transaction.builder().userId(1L).amount(TEN).currency(USD).requestId("request").build();
+        Transaction.builder()
+            .senderId(1L)
+            .receiverId(2L)
+            .amount(TEN)
+            .currency(USD)
+            .requestId("request")
+            .build();
     transactionRepository.save(transaction);
-    List<Transaction> transactions = transactionRepository.findByUserId(1L);
+    transactionRepository.flush();
+    entityManager.refresh(transaction);
+    List<Transaction> transactions = transactionRepository.findAll();
     assertEquals(1, transactions.size());
-    Transaction persisted = transactions.get(0);
-    assertEquals(transaction.getUserId(), persisted.getUserId());
+    Transaction persisted = entityManager.find(Transaction.class, 1L);
+    assertEquals(transaction.getSenderId(), persisted.getSenderId());
+    assertEquals(transaction.getReceiverId(), persisted.getReceiverId());
     assertEquals(transaction.getRequestId(), persisted.getRequestId());
     assertEquals(0, persisted.getAmount().compareTo(transaction.getAmount()));
     assertEquals(transaction.getCurrency(), persisted.getCurrency());
     assertNotNull(persisted.getId());
-    // assertNotNull(persisted.getInserted());
   }
 }

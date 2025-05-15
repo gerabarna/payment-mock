@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -41,4 +42,7 @@ public class User {
   @Enumerated(EnumType.STRING)
   @Column(name = "currency", nullable = false)
   private Currency currency;
+
+  @Column(name = "updated")
+  private Instant updated;
 }
